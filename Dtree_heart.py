@@ -111,7 +111,6 @@ if os.path.exists(csv_path_cleveland):
 # Xuất bảng kết quả tổng hợp ra CSV & Excel trong thư mục Dtree/
 df_results = pd.DataFrame(results_list)
 df_results.to_csv(os.path.join(output_dir, "ket_qua_dtree.csv"), index=False, encoding="utf-8-sig")
-df_results.to_excel(os.path.join(output_dir, "ket_qua_dtree.xlsx"), index=False)
 
 # Xuất báo cáo chi tiết từng lớp (Classification Report) và độ quan trọng đặc trưng
 report_dict = classification_report(y_test, y_pred, output_dict=True)
@@ -125,7 +124,12 @@ df_imp = pd.DataFrame({
     "Mức độ quan trọng (%)": (feat_imp.values * 100).round(2)
 })
 df_imp.to_csv(os.path.join(output_dir, "do_quan_trong_dac_trung_dtree.csv"), index=False, encoding="utf-8-sig")
-df_imp.to_excel(os.path.join(output_dir, "do_quan_trong_dac_trung_dtree.xlsx"), index=False)
+
+try:
+    df_results.to_excel(os.path.join(output_dir, "ket_qua_dtree.xlsx"), index=False)
+    df_imp.to_excel(os.path.join(output_dir, "do_quan_trong_dac_trung_dtree.xlsx"), index=False)
+except ModuleNotFoundError:
+    pass
 
 # Vẽ và lưu các biểu đồ vào thư mục Dtree/
 # 1. Sơ đồ cây quyết định (Kaggle)

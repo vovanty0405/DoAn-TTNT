@@ -114,7 +114,6 @@ if os.path.exists(csv_path_cleveland):
 # Xuất bảng kết quả tổng hợp ra CSV & Excel trong thư mục Bayes/
 df_results = pd.DataFrame(results_list)
 df_results.to_csv(os.path.join(output_dir, "ket_qua_bayes.csv"), index=False, encoding="utf-8-sig")
-df_results.to_excel(os.path.join(output_dir, "ket_qua_bayes.xlsx"), index=False)
 
 # Xuất báo cáo chi tiết từng lớp (Classification Report)
 report_dict = classification_report(y_test, y_pred_nb, output_dict=True)
@@ -130,7 +129,12 @@ df_stats = pd.DataFrame({
     "Phương sai Lớp 1": nb_clf.var_[1].round(3)
 })
 df_stats.to_csv(os.path.join(output_dir, "thong_ke_gaussian_bayes.csv"), index=False, encoding="utf-8-sig")
-df_stats.to_excel(os.path.join(output_dir, "thong_ke_gaussian_bayes.xlsx"), index=False)
+
+try:
+    df_results.to_excel(os.path.join(output_dir, "ket_qua_bayes.xlsx"), index=False)
+    df_stats.to_excel(os.path.join(output_dir, "thong_ke_gaussian_bayes.xlsx"), index=False)
+except ModuleNotFoundError:
+    pass
 
 # Vẽ và lưu các biểu đồ vào thư mục Bayes/
 # 1. Ma trận nhầm lẫn (Confusion Matrix)

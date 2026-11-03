@@ -129,7 +129,6 @@ def train_and_benchmark(dataset_id, dataset_title, csv_path, is_cleveland=False)
     print(df_compare.to_string(index=False))
 
     # Xuất file Excel và CSV bảng so sánh
-    df_compare.to_excel(os.path.join(ds_metrics_dir, "bang_so_sanh_mo_hinh.xlsx"), index=False)
     df_compare.to_csv(os.path.join(ds_metrics_dir, "bang_so_sanh_mo_hinh.csv"), index=False, encoding="utf-8-sig")
 
     # Phân tích độ quan trọng đặc trưng (Feature Importance từ Random Forest)
@@ -140,8 +139,13 @@ def train_and_benchmark(dataset_id, dataset_title, csv_path, is_cleveland=False)
         "Thuộc tính": ranked_imp.index,
         "Mức độ quan trọng (%)": (ranked_imp.values * 100).round(2)
     })
-    df_importance.to_excel(os.path.join(ds_metrics_dir, "do_quan_trong_dac_trung.xlsx"), index=False)
     df_importance.to_csv(os.path.join(ds_metrics_dir, "do_quan_trong_dac_trung.csv"), index=False, encoding="utf-8-sig")
+
+    try:
+        df_compare.to_excel(os.path.join(ds_metrics_dir, "bang_so_sanh_mo_hinh.xlsx"), index=False)
+        df_importance.to_excel(os.path.join(ds_metrics_dir, "do_quan_trong_dac_trung.xlsx"), index=False)
+    except ModuleNotFoundError:
+        pass
 
     # ==========================
     # VẼ VÀ LƯU CÁC BIỂU ĐỒ
@@ -221,8 +225,11 @@ def create_cross_benchmark_summary(df_ds1, df_ds2):
     # Xuất file Excel & CSV tổng hợp
     excel_all = os.path.join(cross_benchmark_dir, "bang_tong_hop_cross_benchmark.xlsx")
     csv_all = os.path.join(cross_benchmark_dir, "bang_tong_hop_cross_benchmark.csv")
-    df_combined.to_excel(excel_all, index=False)
     df_combined.to_csv(csv_all, index=False, encoding="utf-8-sig")
+    try:
+        df_combined.to_excel(excel_all, index=False)
+    except ModuleNotFoundError:
+        pass
 
     # Vẽ biểu đồ so sánh chéo Accuracy & Recall của 2 bộ dữ liệu
     models = ["Decision Tree", "Naive Bayes", "Random Forest"]
