@@ -1,0 +1,3 @@
+﻿Bộ dữ liệu,Mô hình,Accuracy (%),Precision Lớp 1,Recall Lớp 1,F1-Score Lớp 1
+Kaggle Heart Disease (1025 mẫu),Decision Tree,81.17,0.75,0.92,0.83
+UCI Cleveland (303 mẫu),Decision Tree,78.02,0.87,0.63,0.73

@@ -1,0 +1,14 @@
+﻿Thứ hạng,Thuộc tính,Mức độ quan trọng (%)
+1,cp,33.44
+2,ca,18.72
+3,thal,17.93
+4,oldpeak,7.53
+5,age,7.43
+6,thalach,6.74
+7,slope,2.89
+8,sex,2.69
+9,restecg,2.63
+10,chol,0.0
+11,trestbps,0.0
+12,exang,0.0
+13,fbs,0.0

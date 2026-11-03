@@ -28,9 +28,11 @@ from sklearn.metrics import (
 
 # Thiết lập thư mục gốc và các thư mục kết quả
 current_dir = os.path.dirname(os.path.abspath(__file__))
+models_dir = os.path.join(current_dir, "models")
 metrics_dir = os.path.join(current_dir, "metrics")
 cross_benchmark_dir = os.path.join(metrics_dir, "Cross_Benchmark")
 
+os.makedirs(models_dir, exist_ok=True)
 os.makedirs(metrics_dir, exist_ok=True)
 os.makedirs(cross_benchmark_dir, exist_ok=True)
 
@@ -190,9 +192,9 @@ def train_and_benchmark(dataset_id, dataset_title, csv_path, is_cleveland=False)
     plt.savefig(os.path.join(ds_charts_dir, "4_do_quan_trong_dac_trung.png"), bbox_inches='tight')
     plt.close()
 
-    # Lưu mô hình Random Forest tốt nhất của Dataset này ra file .pkl
+    # Lưu mô hình Random Forest tốt nhất của Dataset này vào thư mục models/
     model_filename = f"heart_rf_model_{dataset_id.lower()}.pkl"
-    model_path = os.path.join(current_dir, model_filename)
+    model_path = os.path.join(models_dir, model_filename)
     joblib.dump({
         'model': clf_rf,
         'feature_names': list(X.columns),
@@ -288,10 +290,10 @@ if __name__ == "__main__":
     # 3. Tạo báo cáo & Biểu đồ đối sánh chéo giữa 2 bộ dữ liệu
     create_cross_benchmark_summary(res_ds1, res_ds2)
 
-    # Cập nhật file mô hình mặc định cho web app
-    default_model_src = os.path.join(current_dir, "heart_rf_model_dataset_1_kaggle.pkl")
-    default_model_dst = os.path.join(current_dir, "heart_disease_rf_model.pkl")
+    # Cập nhật file mô hình mặc định cho web app trong thư mục models/
+    default_model_src = os.path.join(models_dir, "heart_rf_model_dataset_1_kaggle.pkl")
+    default_model_dst = os.path.join(models_dir, "heart_disease_rf_model.pkl")
     if os.path.exists(default_model_src):
         import shutil
         shutil.copy(default_model_src, default_model_dst)
-        print("--> Đã đồng bộ mô hình mặc định cho web demo!")
+        print("--> Đã đồng bộ mô hình mặc định cho web demo trong thư mục models/!")

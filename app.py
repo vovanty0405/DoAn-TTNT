@@ -13,6 +13,7 @@ st.set_page_config(
 
 # Đường dẫn tài nguyên
 current_dir = os.path.dirname(os.path.abspath(__file__))
+models_dir = os.path.join(current_dir, 'models')
 metrics_dir = os.path.join(current_dir, 'metrics')
 cross_benchmark_dir = os.path.join(metrics_dir, 'Cross_Benchmark')
 
@@ -61,15 +62,15 @@ with st.sidebar:
     st.caption("Khóa luận / Đồ án Trí tuệ nhân tạo\nThuật toán: Decision Tree, Naive Bayes, Random Forest")
 
 # ==========================================
-# NẠP MÔ HÌNH THEO BỘ DỮ LIỆU ĐƯỢC CHỌN
+# NẠP MÔ HÌNH THEO BỘ DỮ LIỆU ĐƯỢC CHỌN (TỪ THƯ MỤC models/)
 # ==========================================
-model_path = os.path.join(current_dir, selected_config["file_name"])
+model_path = os.path.join(models_dir, selected_config["file_name"])
 
 @st.cache_resource
 def load_trained_model(path):
     if not os.path.exists(path):
         # Dự phòng mô hình mặc định nếu file chưa kịp sinh
-        fallback_path = os.path.join(current_dir, "heart_disease_rf_model.pkl")
+        fallback_path = os.path.join(models_dir, "heart_disease_rf_model.pkl")
         if os.path.exists(fallback_path):
             return joblib.load(fallback_path)
         st.error(f"Không tìm thấy file mô hình tại `{path}`! Hãy chạy file `benchmark.py` trước.")

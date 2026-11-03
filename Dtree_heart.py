@@ -1,16 +1,43 @@
+import sys
+import io
+import os
+
+# Đảm bảo in tiếng Việt trên console Windows không bị lỗi UnicodeEncodeError
+if sys.platform.startswith("win"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 # 1. Khai báo các thư viện cần thiết
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # 2. Nạp thuật toán và các hàm đánh giá
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay
+)
 from sklearn import preprocessing
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+
+# Tạo thư mục Dtree để lưu các biểu đồ, file csv, ảnh
+current_dir = os.path.dirname(os.path.abspath(__file__))
+output_dir = os.path.join(current_dir, "Dtree")
+os.makedirs(output_dir, exist_ok=True)
 
 # 3. Đọc dữ liệu từ file CSV
 # (Đổi lại đường dẫn phù hợp với máy của bạn)
-data = pd.read_csv('D:/Năm 4/Trí tuệ nhân tạo-20260820T130944Z-1-001/DoAn/Data/heart.csv') 
+csv_path_kaggle = os.path.join(current_dir, "Data", "heart.csv")
+if not os.path.exists(csv_path_kaggle):
+    csv_path_kaggle = 'D:/Năm 4/Trí tuệ nhân tạo-20260820T130944Z-1-001/DoAn/Data/heart.csv'
+
+data = pd.read_csv(csv_path_kaggle) 
 print("Kích thước dữ liệu:", data.shape)
 print(data.head())
 
@@ -45,3 +72,118 @@ print("Ground truth    : ", y_test[:20].values)
 
 print("\nAccuracy of Decision tree: %.2f %%" % (100 * accuracy_score(y_test, y_pred)))
 print('\nClassification Report:\n{}'.format(classification_report(y_test, y_pred)))
+
+# ==============================================================================
+# 9. THỰC NGHIỆM TRÊN BỘ DỮ LIỆU UCI CLEVELAND & XUẤT KẾT QUẢ VÀO THƯ MỤC Dtree/
+# ==============================================================================
+COL_NAMES = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
+             'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
+
+csv_path_cleveland = os.path.join(current_dir, "Data", "cleveland.csv")
+results_list = [{
+    "Bộ dữ liệu": "Kaggle Heart Disease (1025 mẫu)",
+    "Mô hình": "Decision Tree",
+    "Accuracy (%)": round(100 * accuracy_score(y_test, y_pred), 2),
+    "Precision Lớp 1": round(precision_score(y_test, y_pred), 2),
+    "Recall Lớp 1": round(recall_score(y_test, y_pred), 2),
+    "F1-Score Lớp 1": round(f1_score(y_test, y_pred), 2)
+}]
+
+clf_cleveland = None
+X_test_clv, y_test_clv, y_pred_clv = None, None, None
+
+if os.path.exists(csv_path_cleveland):
+    data_clv = pd.read_csv(csv_path_cleveland, header=None, names=COL_NAMES, na_values='?')
+    for col in ['ca', 'thal']:
+        data_clv[col] = data_clv[col].fillna(data_clv[col].mode()[0])
+    data_clv['target'] = (data_clv['target'] > 0).astype(int)
+    X_clv = data_clv.iloc[:, :-1]
+    y_clv = data_clv.iloc[:, -1].astype(int)
+    X_train_clv, X_test_clv, y_train_clv, y_test_clv = train_test_split(X_clv, y_clv, test_size=0.3, random_state=42)
+    clf_cleveland = DecisionTreeClassifier(criterion="entropy", max_depth=4, random_state=42)
+    clf_cleveland.fit(X_train_clv, y_train_clv)
+    y_pred_clv = clf_cleveland.predict(X_test_clv)
+    results_list.append({
+        "Bộ dữ liệu": "UCI Cleveland (303 mẫu)",
+        "Mô hình": "Decision Tree",
+        "Accuracy (%)": round(100 * accuracy_score(y_test_clv, y_pred_clv), 2),
+        "Precision Lớp 1": round(precision_score(y_test_clv, y_pred_clv), 2),
+        "Recall Lớp 1": round(recall_score(y_test_clv, y_pred_clv), 2),
+        "F1-Score Lớp 1": round(f1_score(y_test_clv, y_pred_clv), 2)
+    })
+
+# Xuất bảng kết quả tổng hợp ra CSV & Excel trong thư mục Dtree/
+df_results = pd.DataFrame(results_list)
+df_results.to_csv(os.path.join(output_dir, "ket_qua_dtree.csv"), index=False, encoding="utf-8-sig")
+df_results.to_excel(os.path.join(output_dir, "ket_qua_dtree.xlsx"), index=False)
+
+# Xuất báo cáo chi tiết từng lớp (Classification Report) và độ quan trọng đặc trưng
+report_dict = classification_report(y_test, y_pred, output_dict=True)
+df_report = pd.DataFrame(report_dict).transpose().round(2)
+df_report.to_csv(os.path.join(output_dir, "bao_cao_chi_tiet_dtree.csv"), encoding="utf-8-sig")
+
+feat_imp = pd.Series(clf.feature_importances_, index=X.columns).sort_values(ascending=False)
+df_imp = pd.DataFrame({
+    "Thứ hạng": range(1, len(feat_imp) + 1),
+    "Thuộc tính": feat_imp.index,
+    "Mức độ quan trọng (%)": (feat_imp.values * 100).round(2)
+})
+df_imp.to_csv(os.path.join(output_dir, "do_quan_trong_dac_trung_dtree.csv"), index=False, encoding="utf-8-sig")
+df_imp.to_excel(os.path.join(output_dir, "do_quan_trong_dac_trung_dtree.xlsx"), index=False)
+
+# Vẽ và lưu các biểu đồ vào thư mục Dtree/
+# 1. Sơ đồ cây quyết định (Kaggle)
+plt.figure(figsize=(24, 12), dpi=300)
+plot_tree(clf, feature_names=list(X.columns), class_names=['Bình thường (0)', 'Bệnh tim (1)'], filled=True, rounded=True, fontsize=9)
+plt.title("Sơ đồ Cây Quyết định (Decision Tree - Entropy) - Kaggle Dataset", fontsize=16, fontweight='bold')
+plt.savefig(os.path.join(output_dir, "1_cay_quyet_dinh_kaggle.png"), bbox_inches='tight')
+plt.close()
+
+# 2. Sơ đồ cây quyết định (Cleveland)
+if clf_cleveland is not None:
+    plt.figure(figsize=(24, 12), dpi=300)
+    plot_tree(clf_cleveland, feature_names=list(X.columns), class_names=['Bình thường (0)', 'Bệnh tim (1)'], filled=True, rounded=True, fontsize=9)
+    plt.title("Sơ đồ Cây Quyết định (Decision Tree - Entropy) - UCI Cleveland Dataset", fontsize=16, fontweight='bold')
+    plt.savefig(os.path.join(output_dir, "2_cay_quyet_dinh_cleveland.png"), bbox_inches='tight')
+    plt.close()
+
+# 3. Ma trận nhầm lẫn (Confusion Matrix)
+if y_pred_clv is not None:
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=300)
+    ConfusionMatrixDisplay(confusion_matrix(y_test, y_pred), display_labels=['Bình thường', 'Bệnh tim']).plot(ax=axes[0], cmap='Blues', colorbar=False)
+    axes[0].set_title("Decision Tree - Kaggle (1025 mẫu)", fontweight='bold')
+    ConfusionMatrixDisplay(confusion_matrix(y_test_clv, y_pred_clv), display_labels=['Bình thường', 'Bệnh tim']).plot(ax=axes[1], cmap='Blues', colorbar=False)
+    axes[1].set_title("Decision Tree - Cleveland (303 mẫu)", fontweight='bold')
+    plt.suptitle("Ma trận nhầm lẫn (Confusion Matrix) - Decision Tree", fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, "3_confusion_matrix_dtree.png"), bbox_inches='tight')
+    plt.close()
+
+# 4. Biểu đồ cột so sánh hiệu năng Decision Tree
+plt.figure(figsize=(8, 5), dpi=300)
+x_pos = np.arange(len(df_results["Bộ dữ liệu"]))
+width = 0.25
+plt.bar(x_pos - width, df_results["Accuracy (%)"], width, label="Accuracy (%)", color="#3498db")
+plt.bar(x_pos, df_results["Recall Lớp 1"] * 100, width, label="Recall Lớp 1 (%)", color="#e74c3c")
+plt.bar(x_pos + width, df_results["F1-Score Lớp 1"] * 100, width, label="F1-Score Lớp 1 (%)", color="#2ecc71")
+plt.xticks(x_pos, df_results["Bộ dữ liệu"], fontweight='bold')
+plt.ylabel("Tỷ lệ (%)")
+plt.ylim(0, 115)
+plt.title("Hiệu năng mô hình Decision Tree", fontsize=13, fontweight='bold')
+plt.legend()
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "4_bieu_do_hieu_nang_dtree.png"), bbox_inches='tight')
+plt.close()
+
+# 5. Biểu đồ độ quan trọng đặc trưng của Decision Tree
+plt.figure(figsize=(9, 5.5), dpi=300)
+feat_imp.sort_values(ascending=True).plot(kind='barh', color='#3498db', edgecolor='black')
+plt.title("Mức độ quan trọng đặc trưng (Decision Tree - Entropy)", fontsize=13, fontweight='bold')
+plt.xlabel("Mức độ quan trọng (Importance Score)")
+plt.grid(axis='x', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "5_do_quan_trong_dac_trung_dtree.png"), bbox_inches='tight')
+plt.close()
+
+print(f"\n--> Đã lưu toàn bộ bảng CSV, Excel và biểu đồ của Decision Tree vào thư mục: {output_dir}")
