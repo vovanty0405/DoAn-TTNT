@@ -33,11 +33,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(current_dir, "RF")
 os.makedirs(output_dir, exist_ok=True)
 
-# 3. Đọc dữ liệu từ file CSV (Kaggle Heart Disease - 1025 mẫu)
+# 3. Đọc dữ liệu từ file CSV (Kaggle Heart Disease - 1025 mẫu, dùng đường dẫn tương đối)
 csv_path_kaggle = os.path.join(current_dir, "Data", "heart.csv")
-if not os.path.exists(csv_path_kaggle):
-    csv_path_kaggle = 'D:/Năm 4/Trí tuệ nhân tạo-20260820T130944Z-1-001/DoAn/Data/heart.csv'
-
 data = pd.read_csv(csv_path_kaggle)
 print("=" * 60)
 print("HUẤN LUYỆN MÔ HÌNH RANDOM FOREST (100 CÂY)")
