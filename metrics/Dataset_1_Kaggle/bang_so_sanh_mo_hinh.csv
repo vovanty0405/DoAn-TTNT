@@ -1,0 +1,4 @@
+﻿Bộ dữ liệu,Mô hình,Accuracy (%),Recall Lớp 1 (Bệnh tim),F1-Score Lớp 1
+Kaggle Heart Disease (1025 mẫu),Decision Tree,81.17,0.92,0.83
+Kaggle Heart Disease (1025 mẫu),Naive Bayes,81.49,0.89,0.82
+Kaggle Heart Disease (1025 mẫu),Random Forest,88.96,0.95,0.89
