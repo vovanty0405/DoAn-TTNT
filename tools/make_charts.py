@@ -7,6 +7,27 @@ import pandas as pd
 from sklearn.metrics import ConfusionMatrixDisplay
 from heart_pipeline import OUT,LABELS
 
+def save_model_charts(name, metrics, output_dir):
+    """Lưu biểu đồ Test cho một mô hình chạy riêng."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ConfusionMatrixDisplay(
+        np.asarray(metrics['confusion_matrix']),
+        display_labels=['Không bệnh', 'Có bệnh'],
+    ).plot(ax=ax, cmap='Blues', colorbar=False)
+    ax.set(title=f'{name} trên Test', xlabel='Dự đoán', ylabel='Thực tế')
+    fig.savefig(output_dir / 'ma_tran_nham_lan_test.png', dpi=200, bbox_inches='tight')
+    plt.close(fig)
+
+    keys = ['accuracy', 'precision', 'recall', 'f1', 'roc_auc']
+    fig, ax = plt.subplots(figsize=(7, 4))
+    bars = ax.bar(['Accuracy', 'Precision', 'Recall', 'F1', 'ROC-AUC'],
+                  [metrics[key] for key in keys], color='#315B65')
+    ax.bar_label(bars, fmt='%.3f')
+    ax.set(title=f'{name} trên Test', ylabel='Điểm', ylim=(0, 1.1))
+    fig.savefig(output_dir / 'hieu_nang_test.png', dpi=200, bbox_inches='tight')
+    plt.close(fig)
+
 def make_charts(data,audit,details,selected):
  charts=OUT/'charts';charts.mkdir(exist_ok=True)
  plt.rcParams.update({'font.family':'DejaVu Sans','font.size':12,'axes.spines.top':False,'axes.spines.right':False})

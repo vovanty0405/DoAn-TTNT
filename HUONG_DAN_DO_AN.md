@@ -16,7 +16,8 @@ Sau khi clone, chạy `python benchmark.py` để tạo biểu đồ trong `resu
 
 - `Data/heart.csv`: dữ liệu gốc giữ nguyên. Chỉ tệp này tham gia nghiên cứu.
 - `heart_pipeline.py`: quy tắc dữ liệu, tiền xử lý, CV, tìm tham số, đánh giá, lưu mô hình.
-- `benchmark.py`: đầu vào huấn luyện cả ba thuật toán. Các lệnh `Dtree_heart.py`, `Bayes_heart.py`, `RF_heart.py` chuyển sang cùng quy trình chung, tránh sinh kết quả không nhất quán.
+- `benchmark.py`: đầu vào huấn luyện và tìm siêu tham số cho cả ba thuật toán. Kết quả chính cho slide và ứng dụng nằm trong `results/`.
+- Chạy `python Bayes_heart.py`, `python Dtree_heart.py` hoặc `python RF_heart.py` để huấn luyện riêng một mô hình với cấu hình đã chọn. Mỗi lệnh in báo cáo Test và lưu hai biểu đồ PNG lần lượt trong `Bayes/`, `Dtree/` hoặc `RF/`.
 - `app.py`: hai tab nhập liệu và đánh giá, tải Pipeline, không huấn luyện khi nhập.
 - `results/`: kết quả mới duy nhất mà ứng dụng và Slide 8–13 sử dụng.
 - `results/models/*.joblib`: ba Pipeline, bao gồm đổi mã thiếu, thứ tự cột, imputer, encoder, scaler khi cần và bộ phân loại.
