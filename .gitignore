@@ -1,0 +1,21 @@
+# Keep source files and the inputs required to reproduce training.
+/*
+!/.gitignore
+!/*.py
+!/requirements.txt
+!/HUONG_DAN_DO_AN.md
+
+!/Data/
+/Data/*
+!/Data/heart.csv
+
+!/tools/
+/tools/*
+!/tools/make_charts.py
+!/tools/verify_labels.py
+!/tools/test_project.py
+
+# The verified label metadata is required by benchmark.py.
+/results/*
+!/results/
+!/results/label_verification.json

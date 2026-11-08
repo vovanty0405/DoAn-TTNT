@@ -1,0 +1,43 @@
+{
+  "heart_sha256": "ddb2996b2f4db2e00aad13f4518200179ff69f79093838e3c21ffa672ebec0f1",
+  "reference_sha256": "a74b7efa387bc9d108d7d0115d831fe9b414b29ae7124f331b622b4efa0427c8",
+  "reference_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data",
+  "metadata_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/heart-disease.names",
+  "matched_rows": 302,
+  "label_agreement": 302,
+  "match_keys": [
+    "age",
+    "sex",
+    "trestbps",
+    "chol",
+    "fbs",
+    "thalach",
+    "exang",
+    "oldpeak"
+  ],
+  "category_maps_heart_to_uci": {
+    "cp": {
+      "0": 4,
+      "1": 2,
+      "2": 3,
+      "3": 1
+    },
+    "restecg": {
+      "0": 2,
+      "1": 0,
+      "2": 1
+    },
+    "slope": {
+      "0": 3,
+      "1": 2,
+      "2": 1
+    },
+    "thal": {
+      "1": 6,
+      "2": 3,
+      "3": 7
+    }
+  },
+  "purpose": "Verify target/category meaning ONLY. Never fit, validate or evaluate with reference records.",
+  "special_missing_policy": "ca=4 and thal=0 become NaN. ca=4 is not universally identical to missing in the original reference."
+}

@@ -1,4 +1,0 @@
-﻿Bộ dữ liệu,Mô hình,Accuracy (%),Recall Lớp 1 (Bệnh tim),F1-Score Lớp 1
-UCI Cleveland (303 mẫu),Decision Tree,78.02,0.63,0.73
-UCI Cleveland (303 mẫu),Naive Bayes,79.12,0.81,0.79
-UCI Cleveland (303 mẫu),Random Forest,86.81,0.86,0.86
