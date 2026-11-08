@@ -202,11 +202,40 @@ def evaluate(model, X, y):
     }
 
 
+def print_terminal_table(table):
+    """In bảng có đường kẻ ASCII, dùng được trên terminal Windows."""
+    headers = list(table.columns)
+    rows = list(table.itertuples(index=False, name=None))
+    widths = [
+        max([len(header), *(len(str(row[i])) for row in rows)])
+        for i, header in enumerate(headers)
+    ]
+    border = '+' + '+'.join('-' * (width + 2) for width in widths) + '+'
+
+    def format_row(row):
+        return '| ' + ' | '.join(
+            str(value).ljust(width) for value, width in zip(row, widths)
+        ) + ' |'
+
+    print(border)
+    print(format_row(headers))
+    print(border)
+    for row in rows:
+        print(format_row(row))
+    print(border)
+
+
 def train():
     """Chạy toàn bộ thí nghiệm từ dữ liệu gốc đến kết quả trong results/."""
     # Bước 1. Đọc dữ liệu và chia phân tầng để giữ tỷ lệ nhãn giữa hai tập.
     OUT.mkdir(exist_ok=True)
+    print('[1/4] Doc du lieu tu Data/heart.csv', flush=True)
     _, data, audit = load_heart()
+    print(f"  {audit['raw_rows']} dong goc - {audit['duplicates']} dong trung"
+          f" = {len(data)} dong duy nhat, {len(FEATURES)} dac trung")
+    print('  Nhan chuan hoa: 0 = khong benh, 1 = co benh (target = 1 - target goc)')
+    missing = audit['special_missing_unique']
+    print(f"  Ma thieu: ca=4 ({missing['ca=4']} dong), thal=0 ({missing['thal=0']} dong)")
     X, y = data[FEATURES], data.target
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, stratify=y, random_state=42
@@ -227,6 +256,12 @@ def train():
     ]:
         df.to_csv(OUT / (filename + '.csv'), index_label='source_row')
     write_json(OUT / 'data_audit.json', audit)
+    for split, labels in [('Train', y_train), ('Test', y_test)]:
+        counts = labels.value_counts()
+        print(f'  {split}: {len(labels)} dong (0: {counts.get(0, 0)}, 1: {counts.get(1, 0)})')
+    print('  Chia phan tang 70/30. Tien xu ly hoc tu Train trong tung fold.')
+    print('  Bien so: trung vi. Nhi phan/danh muc: mode. Danh muc: One-Hot.')
+    print('  Gaussian NB: chuan hoa them 5 bien so.')
     # Bước 2. Khai báo cách chia 5 fold, cấu hình ban đầu và lưới tham số.
     cv = StratifiedKFold(5, shuffle=True, random_state=42)
     scoring = {m: m for m in ['accuracy', 'precision', 'recall', 'f1', 'roc_auc']}
@@ -251,7 +286,9 @@ def train():
     cv_rows = []
     baselines = {}
     # Bước 3. Đánh giá baseline và tìm cấu hình tốt nhất trên Train.
+    print('\n[2/4] GridSearchCV tren Train: 5 fold phan tang, chon theo F1', flush=True)
     for name, (base, grid) in configs.items():
+        print(f'  Dang huan luyen {name}...', flush=True)
         scores = cross_validate(base, X_train, y_train, cv=cv, scoring=scoring)
         base.fit(X_train, y_train)
         baselines[name] = base
@@ -290,7 +327,9 @@ def train():
             OUT / (name.replace(' ', '_') + '_search.csv'),
             index=False,
         )
-        print(name, search.best_score_, search.best_params_, flush=True)
+        print(f"  {name}: {details[name]['search_candidates']} cau hinh,"
+              f" F1 CV tot nhat = {search.best_score_:.3f}")
+        print(f'  Sieu tham so: {search.best_params_}', flush=True)
     # Bước 4. Chọn mô hình chính theo F1 CV, trước khi tính điểm trên Test.
     cv_table = pd.DataFrame(cv_rows)
     cv_table.to_csv(OUT / 'cross_validation.csv', index=False)
@@ -298,7 +337,15 @@ def train():
         ['f1_mean', 'model'],
         ascending=[False, True],
     ).iloc[0]['model']
+    print('\nF1 CV tren Train (trung binh +/- do lech chuan):')
+    cv_summary = cv_table.assign(
+        f1_cv=cv_table['f1_mean'].map('{:.3f}'.format)
+        + ' +/- ' + cv_table['f1_std'].map('{:.3f}'.format)
+    ).pivot(index='model', columns='variant', values='f1_cv')
+    print_terminal_table(cv_summary.reindex(configs).rename_axis('Model').reset_index())
+    print(f'Mo hinh chinh theo F1 CV: {selected}', flush=True)
     # Bước 5. Đánh giá baseline và cấu hình đã chọn trên Test giữ riêng.
+    print(f'\n[3/4] Danh gia tren {len(y_test)} mau Test', flush=True)
     rows = []
     (OUT / 'models').mkdir(exist_ok=True)
     for (name, model) in fitted.items():
@@ -315,8 +362,27 @@ def train():
         loaded = joblib.load(file)
         assert np.array_equal(model.predict(X_test), loaded.predict(X_test))
         assert np.allclose(disease_score(model, X_test), disease_score(loaded, X_test))
-    pd.DataFrame(rows).to_csv(OUT / 'metrics.csv', index=False)
+    test_table = pd.DataFrame(rows)
+    test_table.to_csv(OUT / 'metrics.csv', index=False)
+    print('So sanh ba mo hinh sau tinh chinh:')
+    print_terminal_table(test_table.assign(**{
+        metric: test_table[metric].map('{:.3f}'.format) for metric in scoring
+    }))
+    print('\nF1 va Recall tren Test truoc va sau tinh chinh:')
+    comparison = []
+    for name, result in details.items():
+        baseline, tuned = result['baseline_test'], result['test']
+        missed, detected = tuned['confusion_matrix'][1]
+        comparison.append({
+            'Model': name,
+            'F1': f"{baseline['f1']:.3f} -> {tuned['f1']:.3f}",
+            'Recall': f"{baseline['recall']:.3f} -> {tuned['recall']:.3f}",
+            'Phat hien (sau)': f'{detected}/{detected + missed}',
+            'Bo sot (sau)': missed,
+        })
+    print_terminal_table(pd.DataFrame(comparison))
     # Bước 6. Hoán vị từng biến gốc trên Test để đo mức giảm F1.
+    print('\n[4/4] Tinh do quan trong dac trung va tao bieu do...', flush=True)
     imp = permutation_importance(
         fitted[selected],
         X_test,
@@ -370,6 +436,7 @@ def train():
     from tools.make_charts import make_charts
     make_charts(data, audit, details, selected)
     print('Selected:', selected, flush=True)
+    print(f'Hoan tat. Thu muc ket qua: {OUT.name}/')
 
 
 if __name__ == '__main__':
